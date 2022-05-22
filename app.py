@@ -5,7 +5,7 @@ from bs_fetcher import bs_fetch
 
 app = Flask(__name__)
 
-@app.route("/moneycontrol")
+@app.route("/")
 def mc():
     data = mc_fetch()
     return jsonify({
