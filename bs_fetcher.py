@@ -1,8 +1,12 @@
+import time
 import requests
 from bs4 import BeautifulSoup
+import ray
 
+@ray.remote
 def bs_fetch():
-    data = requests.get("https://www.business-standard.com/")
+    session = requests.Session()
+    data = session.get("https://www.business-standard.com/")
     soup = BeautifulSoup(data.content, "html.parser")
 
     links = []
@@ -20,7 +24,7 @@ def bs_fetch():
             continue
 
         if a["href"][:9] == "/article/" and a["href"][-5:] == ".html" and topic in topics:
-            links.append(a["href"])
+            links.append(f'https://www.business-standard.com{a["href"]}')
             titles.append(a.text)
 
     for index, link in enumerate(links):
@@ -30,7 +34,7 @@ def bs_fetch():
             continue
     
     for index, link in enumerate(links):
-        article = requests.get(f"https://www.business-standard.com{link}")
+        article = session.get(link)
         article_soup = BeautifulSoup(article.content, "html.parser")
 
         try:
@@ -48,6 +52,7 @@ def bs_fetch():
                 titles.pop(index)
             except:
                 continue
+        time.sleep(0.01)
 
     data = []
     for index, link in enumerate(links):
@@ -62,6 +67,7 @@ def bs_fetch():
         if not i["img"]:
             data.remove(i)
 
-    return data
+    if len(data) > 5:
+        data = data[:5]
 
-bs_fetch()
+    return data

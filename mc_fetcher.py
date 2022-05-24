@@ -1,9 +1,14 @@
+import time
 import requests
 from bs4 import BeautifulSoup
+import ray
 
+@ray.remote
 def mc_fetch():
+    session = requests.Session()
     data = requests.get("https://www.moneycontrol.com/")
-    soup = BeautifulSoup(data.content, "html.parser")
+    soup = BeautifulSoup(data.content, "lxml")
+    time.sleep(0.01)
 
     links = []
     titles = []
@@ -25,8 +30,8 @@ def mc_fetch():
             titles.append(a["title"])
 
     for index, link in enumerate(links):
-        article = requests.get(link)
-        article_soup = BeautifulSoup(article.content, "html.parser")
+        article = session.get(link)
+        article_soup = BeautifulSoup(article.content, "lxml")
 
         try:
             desc = article_soup.find("h2", attrs = {"class", "article_desc"}).text
@@ -41,18 +46,21 @@ def mc_fetch():
                 titles.pop(index)
             except:
                 pass
-    
-    if len(links) > 5:
-        links = links[:5]
-        titles = titles[:5]
+        time.sleep(0.01)
     
     data = []
     for index, link in enumerate(links):
-        data.append({
-            "title": titles[index],
-            "desc": descs[index],
-            "link": link,
-            "img": imgs[index]
-        })
+        try:
+            data.append({
+                "title": titles[index],
+                "desc": descs[index],
+                "link": link,
+                "img": imgs[index]
+            })
+        except:
+            break
+    
+    if len(data) > 5:
+        data = data[:5]
 
     return data
