@@ -1,13 +1,15 @@
 import time
 import requests
 from bs4 import BeautifulSoup
-import ray
+import lxml
+from concurrent.futures import ThreadPoolExecutor
+import time
 
-@ray.remote
+session = requests.Session()
 def bs_fetch():
-    session = requests.Session()
     data = session.get("https://www.business-standard.com/")
-    soup = BeautifulSoup(data.content, "html.parser")
+    soup = BeautifulSoup(data.content, "lxml")
+    time.sleep(0.01)
 
     links = []
     titles = []
@@ -33,41 +35,41 @@ def bs_fetch():
             titles.pop(index)
             continue
     
-    for index, link in enumerate(links):
-        article = session.get(link)
-        article_soup = BeautifulSoup(article.content, "html.parser")
+    with ThreadPoolExecutor(max_workers = len(links)) as p:
+        future = list(p.submit(scrape_more, link).result() for link in links)
 
-        try:
-            desc = article_soup.find("h2", attrs = {"class", "alternativeHeadline"}).text
-            descs.append(desc)
-
-            img = article_soup.find("img", attrs = {"class", "imgCont"})
-            if not img:
-                imgs.append(None)
-                continue
-            imgs.append(img["src"])
-        except:
-            try:
-                links.remove(link)
-                titles.pop(index)
-            except:
-                continue
-        time.sleep(0.01)
+    for i in future:
+        descs.append(i[0])
+        imgs.append(i[1])
 
     data = []
     for index, link in enumerate(links):
-        data.append({
-            "title": titles[index],
-            "desc": descs[index],
-            "link": links[index],
-            "img": imgs[index]
-        })
-
-    for i in data:
-        if not i["img"]:
-            data.remove(i)
-
-    if len(data) > 5:
-        data = data[:5]
+        if descs[index] and imgs[index]:
+            data.append({
+                "title": titles[index],
+                "desc": descs[index],
+                "link": links[index],
+                "img": imgs[index]
+            })
 
     return data
+
+def scrape_more(link):
+    desc_img = []
+
+    article = session.get(link)
+    article_soup = BeautifulSoup(article.content, "lxml")
+
+    desc = article_soup.find("h2", attrs = {"class", "alternativeHeadline"})
+    if not desc:
+        desc_img.append(None)
+    else:
+        desc_img.append(desc.text)
+
+    img = article_soup.find("img", attrs = {"class", "imgCont"})
+    if not img:
+        desc_img.append(None)
+    else:
+        desc_img.append(img["src"])
+
+    return desc_img

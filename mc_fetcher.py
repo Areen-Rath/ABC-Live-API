@@ -1,11 +1,11 @@
 import time
 import requests
 from bs4 import BeautifulSoup
-import ray
+import lxml
+from concurrent.futures import ThreadPoolExecutor
 
-@ray.remote
+session = requests.Session()
 def mc_fetch():
-    session = requests.Session()
     data = requests.get("https://www.moneycontrol.com/")
     soup = BeautifulSoup(data.content, "lxml")
     time.sleep(0.01)
@@ -17,10 +17,9 @@ def mc_fetch():
 
     a_data = soup.find(class_ = "sub-col-left")
     a_tags = a_data.find_all("a")
-    last_link = ""
     for a in a_tags:
         if (
-            a["href"] != last_link
+            a["href"] not in links
             and a["href"][28:43] == "/news/business/"
             and a["href"][42:51] != "/markets/"
             and a["href"][42:55] != "/commodities/"
@@ -29,38 +28,56 @@ def mc_fetch():
             links.append(a["href"])
             titles.append(a["title"])
 
-    for index, link in enumerate(links):
-        article = session.get(link)
-        article_soup = BeautifulSoup(article.content, "lxml")
+    a_data = soup.find(class_ = "sub-col-rht")
+    a_tags = a_data.find_all("a")
+    for a in a_tags:
+        if (
+            a["href"] not in links
+            and a["href"][28:43] == "/news/business/"
+            and a["href"][42:51] != "/markets/"
+            and a["href"][42:55] != "/commodities/"
+            and a["href"][42:53] != "/companies/"
+        ):
+            last_link = a["href"]
+            links.append(a["href"])
+            titles.append(a["title"])
+            
+    with ThreadPoolExecutor(max_workers = len(links)) as p:
+        future = list(p.submit(scrape_more, link).result() for link in links)
 
-        try:
-            desc = article_soup.find("h2", attrs = {"class", "article_desc"}).text
-            descs.append(desc)
+    for i in future:
+        descs.append(i[0])
+        imgs.append(i[1])
 
-            img_data = article_soup.find(class_ = "article_image")
-            img = img_data.find_all("img")
-            imgs.append(img[0]["data-src"])
-        except:
-            try:
-                links.remove(link)
-                titles.pop(index)
-            except:
-                pass
-        time.sleep(0.01)
-    
     data = []
     for index, link in enumerate(links):
-        try:
+        if descs[index] and imgs[index]:
             data.append({
                 "title": titles[index],
                 "desc": descs[index],
                 "link": link,
                 "img": imgs[index]
             })
-        except:
-            break
-    
-    if len(data) > 5:
-        data = data[:5]
 
     return data
+
+def scrape_more(link):
+    desc_img = []
+
+    article = session.get(link)
+    article_soup = BeautifulSoup(article.content, "lxml")
+
+    desc = article_soup.find("h2", attrs = {"class", "article_desc"})
+    if not desc:
+        desc_img.append(None)
+    else:
+        desc_img.append(desc.text)
+
+    img_data = article_soup.find(class_ = "article_image")
+    if not img_data:
+        desc_img.append(None)
+    else:
+        img = img_data.find_all("img")
+        desc_img.append(img[0]["data-src"])
+
+    return desc_img
