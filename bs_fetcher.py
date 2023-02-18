@@ -76,6 +76,3 @@ def scrape_more(link):
         desc_img.append(img["src"])
 
     return desc_img
-
-data = bs_fetch()
-print(data)
