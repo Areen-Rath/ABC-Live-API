@@ -3,7 +3,6 @@ import requests
 from bs4 import BeautifulSoup
 import lxml
 from concurrent.futures import ThreadPoolExecutor
-import time
 
 session = requests.Session()
 def bs_fetch():
@@ -16,7 +15,7 @@ def bs_fetch():
     descs = []
     imgs = []
 
-    a_data = soup.find(class_ = "row-inner topB")
+    a_data = soup.find(class_ = "coutent-panel bs-new-top-story-image-block")
     a_tags = a_data.find_all("a")
     topics = ["economy-policy", "companies"]
     for a in a_tags:
@@ -25,7 +24,11 @@ def bs_fetch():
         except:
             continue
 
-        if a["href"][:9] == "/article/" and a["href"][-5:] == ".html" and topic in topics:
+        if (
+            a["href"][:17] == "/article/finance/" 
+            or a["href"][:17] == "/article/economy-"
+            or a["href"][:17] == "/article/companie"
+        ) and a["href"][-5:] == ".html" and topic in topics:
             links.append(f'https://www.business-standard.com{a["href"]}')
             titles.append(a.text)
 
@@ -60,7 +63,7 @@ def scrape_more(link):
     article = session.get(link)
     article_soup = BeautifulSoup(article.content, "lxml")
 
-    desc = article_soup.find("h2", attrs = {"class", "alternativeHeadline"})
+    desc = article_soup.find("h2", attrs = {"class", "subHeadingClass"})
     if not desc:
         desc_img.append(None)
     else:
@@ -73,3 +76,6 @@ def scrape_more(link):
         desc_img.append(img["src"])
 
     return desc_img
+
+data = bs_fetch()
+print(data)
