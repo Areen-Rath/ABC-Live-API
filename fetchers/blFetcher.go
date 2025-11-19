@@ -3,6 +3,7 @@ package fetchers;
 import (
 	"slices"
 	"strings"
+	"unicode/utf8"
 	"github.com/geziyor/geziyor"
 	"github.com/geziyor/geziyor/client"
 	"github.com/PuerkitoBio/goquery"
@@ -72,7 +73,11 @@ func blScrapeMore(r *client.Response) {
 
 	desc := parsed.Find("h2.sub-title").First().Text();
 	if !strings.Contains(desc, "LIVE") {
-		blDescs[slices.Index(blLinks, link)] = strings.TrimSpace(desc);
+		if (utf8.RuneCountInString(strings.TrimSpace(desc)) > 220) {
+			blDescs[slices.Index(blLinks, link)] = strings.TrimSpace(desc)[:220] + "... Read More";
+		} else {
+			blDescs[slices.Index(blLinks, link)] = strings.TrimSpace(desc);
+		}
 	}
 
 	src, exists := parsed.Find("source").First().Attr("srcset");

@@ -17,3 +17,7 @@
 
 * End of Python project
 * API rewritten in Golang
+
+# ABC Live API 2.1
+
+* News synopsis capped at 220 characters.

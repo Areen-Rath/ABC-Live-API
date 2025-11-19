@@ -3,6 +3,7 @@ package fetchers;
 import (
 	"slices"
 	"strings"
+	"unicode/utf8"
 	"github.com/PuerkitoBio/goquery"
 	"github.com/geziyor/geziyor"
 	"github.com/geziyor/geziyor/client"
@@ -70,7 +71,11 @@ func etScrapeMore(r *client.Response) {
 	link := r.Request.URL.String();
 
 	desc := parsed.Find("p.summary").First().Text();
-	etDescs[slices.Index(etLinks, link)] = strings.TrimSpace(desc);
+	if (utf8.RuneCountInString(strings.TrimSpace(desc)) > 220) {
+		etDescs[slices.Index(etLinks, link)] = strings.TrimSpace(desc)[:220] + "... Read More";
+	} else {
+		etDescs[slices.Index(etLinks, link)] = strings.TrimSpace(desc);
+	}
 
 	src, exists := parsed.Find("figure.artImg img").First().Attr("src");
 	if exists {
