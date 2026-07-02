@@ -1,5 +1,8 @@
 # ABC Live API
 
+**Note**: The project now uses SemVer to track internal changes
+and the versions have been rewritten accordingly.
+
 ABC Live API is the API made for my financial news compiling app [ABC Live](https://github.com/Areen-Rath/ABC-Live). The API collects headlines with other information like description, article image and hyperlink from Moneycontrol, Economic Times and Business Line, which are then used in the app to display the news and redirect to the link by clicking on the news.
 
 Refer to [ABC Live](https://github.com/Areen-Rath/ABC-Live), the app for which it was made.

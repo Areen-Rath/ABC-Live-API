@@ -1,23 +1,29 @@
-# ABC Live API 1.0
+# 1.0.0
 
 * Initial commit
 
-# ABC Live API 1.1
+# 1.0.1
 
 * Optimised parsing by introducing `time.sleep()`
 * `html.parser` parser replaced with `lxml`
 * Parsing multiple webpages through `ThreadPoolExecutor`
 
-# ABC Live API 1.5
+# 1.0.2
 
 * Flask module replaced with FastAPI module for faster API performance
 * BeautifulSoup module replaced with selectolax module for faster web scraping
 
-# ABC Live API 2.0
+# 1.1.0
 
 * End of Python project
 * API rewritten in Golang
 
-# ABC Live API 2.1
+# 1.1.1
 
 * News synopsis capped at 220 characters.
+
+# 1.1.2
+
+* News synposis cap removed.
+* Github Actions implemented for deployment.
+* SemVer implemented.

@@ -3,7 +3,6 @@ package fetchers;
 import (
 	"slices"
 	"strings"
-	"unicode/utf8"
 	"github.com/geziyor/geziyor"
 	"github.com/geziyor/geziyor/client"
 	"github.com/PuerkitoBio/goquery"
@@ -81,14 +80,10 @@ func mcScrapeMore(r *client.Response) {
 
 	link := r.Request.URL.String();
 
-	desc := parsed.Find("h2.article_desc").First().Text();
-	if (utf8.RuneCountInString(strings.TrimSpace(desc)) > 220) {
-		mcDescs[slices.Index(mcLinks, link)] = strings.TrimSpace(desc)[:220] + "... Read More";
-	} else {
-		mcDescs[slices.Index(mcLinks, link)] = strings.TrimSpace(desc);
-	}
+	desc := parsed.Find("div.article_desc").First().Text();
+	mcDescs[slices.Index(mcLinks, link)] = strings.TrimSpace(desc);
 
-	src, exists := parsed.Find("div.article_image img").First().Attr("data-src");
+	src, exists := parsed.Find("div.article_image img").First().Attr("src");
 	if exists {
 		mcImgs[slices.Index(mcLinks, link)] = src;
 	}  else {

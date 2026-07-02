@@ -1,4 +1,4 @@
-package fetchers
+package fetchers;
 
 type News struct {
 	Title	string	`json:"title"`
